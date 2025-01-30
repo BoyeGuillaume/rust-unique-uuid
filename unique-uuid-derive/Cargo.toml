@@ -13,8 +13,8 @@ categories = ["development-tools"]
 proc-macro = true
 
 [dependencies]
-uuid = { version = "*", features = ["serde", "v4"] }
+uuid = { version = ">=1", features = ["serde", "v4"] }
 syn = "2.0.96"
 quote = "1.0.9"
-serde = { version = "~1", features = ["derive"] }
+serde = { version = ">=1", features = ["derive"] }
 toml = ">=0.7"
