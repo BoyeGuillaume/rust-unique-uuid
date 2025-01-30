@@ -6,7 +6,7 @@ edition = "2021"
 license = "MIT"
 description = "A library to generate unique UUIDs."
 repository = "https://github.com/BoyeGuillaume/rust-unique-uuid/tree/master"
-readme = "README.md"
+readme = "../README.md"
 keywords = ["uuid", "compile-time"]
 categories = ["development-tools"]
 
