@@ -1,0 +1,18 @@
+[package]
+name = "unique-uuid"
+version = "0.1.0"
+authors = ["Guillaume Boyé <guillaume.boye@epfl.ch>"]
+edition = "2021"
+license = "MIT"
+description = "A library to generate unique UUIDs."
+keywords = ["uuid", "compile-time"]
+categories = ["development-tools"]
+
+[dependencies]
+uuid = "*"
+serde = { version = "*", features = ["derive"], optional = true }
+unique-uuid-derive = { path = "../unique-uuid-derive" }
+
+[features]
+default = ["serde"]
+serde = ["dep:serde", "uuid/serde"]
