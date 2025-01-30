@@ -1,3 +1,49 @@
+//! This crate provides procedural macros for generating unique UUIDs associated with tags and types.
+//! It offers two main functionalities:
+//! - `unique_tag`: A procedural macro that generates a unique UUID for a given string tag
+//! - `UniqueTypeTag`: A derive macro that automatically generates a unique UUID for a type
+//!
+//! The generated UUIDs are persisted in a TOML file (`types.toml` by default) to ensure
+//! consistency across multiple compilations and crate boundaries.
+//!
+//! # Features
+//! - Persistent UUID generation and storage
+//! - Consistent UUID mapping for types and tags
+//! - Thread-safe file handling
+//! - TOML-based storage format
+//!
+//! # Examples
+//! ```rust
+//! use unique_uuid_derive::{unique_tag, UniqueTypeTag};
+//!
+//! // Using unique_tag macro
+//! let my_tag = unique_tag!("my_custom_tag");
+//!
+//! // Using UniqueTypeTag derive macro
+//! #[derive(UniqueTypeTag)]
+//! struct MyStruct;
+//! ```
+//!
+//! # File Structure
+//! The crate maintains a TOML file with the following structure:
+//! ```toml
+//! [unique_tags]
+//! "tag_name" = "uuid"
+//!
+//! [unique_type_tags]
+//! "type_name" = "uuid"
+//! ```
+//!
+//! # Implementation Details
+//! - UUIDs are generated using UUID v4 (random)
+//! - File operations are performed with proper error handling
+//! - The system supports both string tags and type tags
+//!
+//! # Safety
+//! This crate performs file I/O operations during compilation, which may fail if:
+//! - The process lacks file system permissions
+//! - The TOML file becomes corrupted
+//! - Concurrent compilation attempts cause file access conflicts
 use std::{
     collections::HashMap,
     fs::OpenOptions,
@@ -10,16 +56,38 @@ use syn::spanned::Spanned;
 
 static DEFAULT_TYPES_FILE_NAME: &str = "types.toml";
 
-/// This macro allows for the automatic generation of [`unique_uuid::UniqueTag`] for
-/// the provided string. Notice that if the string is the same, then the generated tag
-/// will be the same. This work within a same crate, but no guarantees are made for
-/// cross-crate compatibility. This means that if a tag is generated for `"my-tag-unique"`,
-/// then another crate may generate a different tag for the same string.
+/// A procedural macro that generates a unique UUID for a given string tag.
+/// The generated UUID is persisted in a TOML file to ensure consistency across
+/// multiple compilations and crate boundaries.
+///
+/// # Warnings
+/// Tags are consistent within the same crate, but **MAY** differ across crates. They
+/// will match only if the `types.toml` file is shared between the crates (typically for
+/// a workspace). As such special care should be taken when working with macros that are
+/// public and used across crates.
+///
+/// # Arguments
+/// * Input must be a string literal that serves as the tag identifier
+///
+/// # Returns
+/// Returns a [`unique_uuid::UniqueTag`] containing a UUID that is consistently
+/// mapped to the input tag.
 ///
 /// # Example
 /// ```rust
-/// let tag = unique_tag!("my-tag-unique");
+/// use unique_uuid_derive::unique_tag;
+///
+/// let my_uuid = unique_tag!("my_custom_tag");
 /// ```
+///
+/// # Panics
+/// This macro will panic if:
+/// * The TOML file cannot be opened or created
+/// * There are permission issues with the file system
+/// * The TOML file is corrupted or invalid
+///
+/// # File Storage
+/// The UUID-tag mapping is stored in the `types.toml` file under the `[unique_tags]` section.
 #[proc_macro]
 pub fn unique_tag(input: TokenStream) -> TokenStream {
     let string = syn::parse_macro_input!(input as syn::LitStr);
@@ -31,16 +99,35 @@ pub fn unique_tag(input: TokenStream) -> TokenStream {
     })
 }
 
-/// This macro allows for the automatic generation of [`unique_uuid::UniqueTypeTag`] for
-/// the provided type. This will generate a unique tag for the type, which will be the
-/// same for the same type across crates. This is useful for serialization and deserialization
-/// of types, where the type is used as a key.
+/// A derive macro that automatically generates a unique UUID for a type.
+/// The generated UUID is associated with the type name and persisted in a TOML file
+/// to ensure consistency across multiple compilations and crate boundaries.
+///
+/// This macro implements the [`unique_uuid::UniqueTypeTag`] trait for the decorated type,
+/// providing a constant `TYPE_TAG` that contains a unique UUID.
 ///
 /// # Example
 /// ```rust
+/// use unique_uuid_derive::UniqueTypeTag;
+///
 /// #[derive(UniqueTypeTag)]
-/// pub struct MyType;
+/// struct MyStruct;
+///
+/// // The UUID can be accessed via the trait implementation
+/// let type_uuid = MyStruct::TYPE_TAG;
 /// ```
+///
+/// # Implementation Details
+/// * Generates a UUID v4 for the type if one doesn't exist
+/// * Stores the UUID in `types.toml` under the `[unique_type_tags]` section
+/// * Uses the type's name as the key for UUID mapping
+///
+/// # Panics
+/// This macro will panic if:
+/// * The TOML file cannot be opened or created
+/// * There are permission issues with the file system
+/// * The TOML file is corrupted or invalid
+///
 #[proc_macro_derive(UniqueTypeTag)]
 pub fn unique_type_tag(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::DeriveInput);
