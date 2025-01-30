@@ -1,5 +1,6 @@
-use unique_uuid::unique_tag;
+use unique_uuid::{unique_tag, UniqueTypeTag};
 
+#[derive(UniqueTypeTag)]
 pub struct Test;
 
 fn main() {
@@ -12,4 +13,7 @@ fn main() {
 
     let test3 = unique_tag!("test2");
     println!("Tag for \"test2\": {:?}", test3);
+
+    // For types
+    println!("Tag for type struct Test: {:?}", Test::TYPE_TAG);
 }

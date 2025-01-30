@@ -1,3 +1,6 @@
 [unique_tags]
 test2 = "d7edd7b5-1715-4bb1-9b6c-2cbf4ec11b24"
 test1 = "2af1216e-7042-406a-a577-c39a7e7c3faa"
+
+[unique_type_tags]
+"::Test" = "6aac8026-6ca8-4c82-ac39-d74bedf1ac50"
